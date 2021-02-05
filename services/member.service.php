@@ -13,13 +13,61 @@ class MemberService
     public function register($title, $firstname, $lastname, $idcard, $telephone)
     {
         global $db, $api, $date, $site_url;
-        if (!$title || !$firstname || !$lastname || $idcard || $telephone) {
-            $api->popup("Error", "กรุณากรอกข้อมูลให้ครบทุกช่อง");
+        if (!$title || !$firstname || !$lastname) {
+            $api->popup("Error", "กรุณากรอกชื่อให้ถูกต้อง", "error");
+        } else {
+            $active = 'Y';
+            $sql = $db->prepare("INSERT INTO mscustomer(title, firstname, lastname, telephone, idcard, active) VALUES(:title, :firstname, :lastname, :telephone, :idcard, :active)");
+            $sql->bindParam(":title", $title);
+            $sql->bindParam(":firstname", $firstname);
+            $sql->bindParam(":lastname", $lastname);
+            $sql->bindParam(":telephone", $telephone);
+            $sql->bindParam(":idcard", $idcard);
+            $sql->bindParam(":active", $active);
+            $sql->execute();
+            if (!$sql) {
+                $api->popup("Error", "เกิดข้อผิดพลาดขณะส่งข้อมูล", "error");
+            } else {
+                $api->popup("Success", "บันทึกข้อมูลสำเร็จ", "success", "?pages=member");
+            }
+        }
+    }
+
+    public function editMember($delete = false, $customerId = null, $title = null, $firstname = null, $lastname = null, $idcard = null, $telephone = null)
+    {
+        global $db, $api, $date;
+        if ((!$delete) && (!$title || !$firstname || !$lastname)) {
+            $api->popup("Error", "กรุณากรอกชื่อให้ถูกต้อง", "error");
+            return;
+        }
+
+        if (!$delete) {
+            $active = 'Y';
+            $sql = $db->prepare("UPDATE mscustomer SET title = :title, firstname = :firstname, lastname = :lastname, telephone = :telephone, idcard = :idcard, active = :active WHERE customerId = :customerId");
+            $sql->bindParam(":title", $title);
+            $sql->bindParam(":firstname", $firstname);
+            $sql->bindParam(":lastname", $lastname);
+            $sql->bindParam(":telephone", $telephone);
+            $sql->bindParam(":idcard", $idcard);
+        } else {
+            $active = 'N';
+            $sql = $db->prepare("UPDATE mscustomer SET active = :active WHERE customerId = :customerId");
+        }
+        $sql->bindParam(":active", $active);
+        $sql->bindParam(":customerId", $customerId);
+        $sql->execute();
+        if (!$sql) {
+            $api->popup("Error", "เกิดข้อผิดพลาดขณะส่งข้อมูล", "error");
+        } else {
+            if (!$delete) {
+                echo "Update Success";
+            } else {
+                echo "Delete Success";
+            }
         }
     }
 }
 ?>
-
 <script>
     function addMember() {
         var x = document.getElementById("addMember");
@@ -37,5 +85,57 @@ class MemberService
         } else if (x.style.display = "none") {
             x.style.display = "block";
         }
+    }
+
+    function onUpdate(deletet = false, customerId = null, title = null, firstname = null, lastname = null, idcard = null, telephone = null) {
+        var xmlHttp = new XMLHttpRequest();
+        xmlHttp.open("GET", "?pages=member&update=1&customerId=" + customerId + "&title=" + title + "&firstname=" + firstname + "&lastname=" + lastname + "&idcard=" + idcard + "&telephone=" + telephone + "", false); // false for synchronous request
+        xmlHttp.send(null);
+        console.log(xmlHttp);
+        if (xmlHttp.status == 200) {
+            if (xmlHttp.responseText.includes("Update Success") != false) {
+                swal.fire(
+                    'Success',
+                    'บันทึกข้อมูลสำเร็จ',
+                    'success'
+                ).then(result => {
+                    if (result) {
+                        $("#memberList").load(" #memberList > *");
+                    }
+                })
+            }
+        }
+    }
+
+    function openDelete(customerId) {
+        Swal.fire({
+            title: 'คำเตือน !',
+            text: "คุณต้องการที่จะลบข้อมูลหรือไม่",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'ตกลง',
+            cancelButtonText: 'ยกเลิก'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                var xmlHttp = new XMLHttpRequest();
+                xmlHttp.open("GET", "?pages=member&update=2&customerId=" + customerId + "", false); // false for synchronous request
+                xmlHttp.send(null);
+                if (xmlHttp.status == 200) {
+                    if (xmlHttp.responseText.includes("Delete Success") != false) {
+                        swal.fire(
+                            'Success',
+                            'ลบข้อมูลสำเร็จ',
+                            'success'
+                        ).then(result => {
+                            if (result) {
+                                $("#memberList").load(" #memberList > *");
+                            }
+                        })
+                    }
+                }
+            }
+        })
     }
 </script>

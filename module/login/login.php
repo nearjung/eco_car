@@ -22,7 +22,7 @@ $loginService = new LoginService(true);
                     if (isset($_POST['email'])) {
                         $login = $loginService->login($_POST['email'], $_POST['password']);
                         if ($login) {
-                            $api->popup("สำเร็จ!", "เข้าสู่ระบบสำเร็จ", "success", '');
+                            $api->popup("สำเร็จ!", "เข้าสู่ระบบสำเร็จ", "success", '/');
                         }
                     }
                     ?>

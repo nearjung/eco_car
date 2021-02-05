@@ -1,10 +1,10 @@
 <?php
 ini_set('display_errors', '1');
 $mysql_connection_setting = true;
-$mysql_host =   "localhost";
-$mysql_user =   "root";
-$mysql_pass =   "123456";
-$mysql_db   =   "ecocar";
+$mysql_host =   "sql12.freemysqlhosting.net";
+$mysql_user =   "sql12390926";
+$mysql_pass =   "2zDWCcRgaD";
+$mysql_db   =   "sql12390926";
 
 // Site config.
 $site_charset   = "utf-8";

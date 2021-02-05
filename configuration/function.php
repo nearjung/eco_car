@@ -19,6 +19,10 @@ class API
 		echo "</script>";
 	}
 
+	public function pop($data) {
+		echo "<script>alert(".$data.")</script>";
+	}
+
 	public function go($link)
 	{
 		echo "<script>window.top.location='" . $link . "';</script>";
@@ -43,4 +47,5 @@ class API
 	{
 		return json_encode($data, JSON_UNESCAPED_UNICODE);
 	}
+
 }
