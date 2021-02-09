@@ -11,17 +11,21 @@ if (@$_GET['update'] == 2) {
 }
 ?>
 <div class="dashboard-content">
-    <table class="table table-hover" id="memberList">
+    <table class="table table-hover">
         <thead>
             <tr>
-                <th scope="col">รหัสลูกค้า</th>
-                <th scope="col">ชื่อ-นามสกุล</th>
-                <th scope="col">เบอร์โทรศัพท์</th>
-                <th scope="col"><button type="button" onclick="addMember()" class="btn btn-primary"><i class="fas fa-user-plus"></i></button> <button onclick="openDelete()" type="button" class="btn btn-info"><i class="fas fa-search"></i></button></th>
+                <th class="col-1">#</th>
+                <th class="col-4">ชื่อ-นามสกุล</th>
+                <th class="col-3">เบอร์โทรศัพท์</th>
+                <th class="col-4" id="nosearch"><button type="button" onclick="addMember()" class="btn btn-primary"><i class="fas fa-user-plus"></i></button> <button onclick="onSearchBtn()" type="button" class="btn btn-info"><i class="fas fa-search"></i></button></th>
+                <th class="col-4" id="search" style="display:none;"><input value="<?php echo @$_GET['searchTxt']; ?>" placeholder="ค้นหา (กด Enter เพื่อยืนยัน)" id="searchBox" autocomplete="off" type="text" onkeyup="onSearch($('#searchBox').val())"> <button onclick="onSearchBtn()" type="button" class="btn btn-danger" stlye="margin-bottom: 4px;"><i class="fas fa-times"></i></button></th>
             </tr>
         </thead>
-        <tbody>
+        <tbody id="memberList">
             <?php
+            if (@$_GET['update'] == 3) {
+                $getMember = $memberService->get($_GET['searchTxt']);
+            }
             for ($i = 0; $i < count($getMember); $i++) {
                 $member = $getMember[$i];
             ?>

@@ -1,10 +1,15 @@
 <?php
 class MemberService
 {
-    public function get()
+    public function get($searchTxt = null)
     {
         global $db, $api, $date;
-        $sql = $db->prepare("SELECT * FROM mscustomer WHERE active = 'Y' ORDER BY customerId DESC");
+        $query = "SELECT * FROM mscustomer WHERE ";
+        $query .= " active = 'Y'";
+        if ($searchTxt) {
+            $query .= " AND CONCAT(title,firstname,' ',lastname) LIKE '%" . $searchTxt . "%' ";
+        }
+        $sql = $db->prepare($query);
         $sql->execute();
         $result = $sql->fetchAll();
         return $result;
@@ -87,11 +92,32 @@ class MemberService
         }
     }
 
+    function onSearchBtn() {
+        var x = document.getElementById("nosearch");
+        var y = document.getElementById("search");
+
+        if (x.style.display != "none") {
+            y.style.display = "revert";
+            x.style.display = "none";
+        } else if (x.style.display == "none") {
+            y.style.display = "none";
+            x.style.display = "revert";
+        }
+
+    }
+
+    function onSearch(txt) {
+        var keycode = (event.keyCode ? event.keyCode : event.which);
+        if (keycode == '13') {
+            window.top.location = "?pages=member&update=3&searchTxt=" + txt + "";
+        }
+    }
+
+
     function onUpdate(deletet = false, customerId = null, title = null, firstname = null, lastname = null, idcard = null, telephone = null) {
         var xmlHttp = new XMLHttpRequest();
         xmlHttp.open("GET", "?pages=member&update=1&customerId=" + customerId + "&title=" + title + "&firstname=" + firstname + "&lastname=" + lastname + "&idcard=" + idcard + "&telephone=" + telephone + "", false); // false for synchronous request
         xmlHttp.send(null);
-        console.log(xmlHttp);
         if (xmlHttp.status == 200) {
             if (xmlHttp.responseText.includes("Update Success") != false) {
                 swal.fire(
