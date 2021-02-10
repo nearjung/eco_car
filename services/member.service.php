@@ -35,6 +35,7 @@ class MemberService
             } else {
                 $api->popup("Success", "บันทึกข้อมูลสำเร็จ", "success", "?pages=member");
             }
+            $api->log($api->jsonParse($sql));
         }
     }
 
@@ -70,6 +71,7 @@ class MemberService
                 echo "Delete Success";
             }
         }
+        $api->log($api->jsonParse($sql));
     }
 }
 ?>
