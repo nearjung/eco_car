@@ -19,6 +19,7 @@ class LoginService
             $api->popup("Error", "อีเมลหรือรหัสผ่านไม่ถูกต้อง", "error");
         } else {
             setcookie("email", $result['email'], 0, "/");
+            setcookie("empId", $result['empId'], 0, "/");
             setcookie("password", $result['password'], 0, "/");
             return $result;
         }

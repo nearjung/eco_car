@@ -20,4 +20,5 @@ $ip = $_SERVER['REMOTE_ADDR'];
 date_default_timezone_set('Asia/Bangkok');
 $dateNow = date("d/m/Y H:i:s");
 $date = date("Y-m-d H:i:s");
+$empId = @$_COOKIE['empId'];
 ?>

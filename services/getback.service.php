@@ -1,5 +1,5 @@
 <?php
-class RentalService
+class GetbackService
 {
     public function get()
     {
@@ -11,6 +11,10 @@ class RentalService
         $cmd .= " trrental.customerId,";
         $cmd .= " trrental.carId,";
         $cmd .= " trrental.price,";
+        $cmd .= " trrental.backDate,";
+        $cmd .= " trrental.status,";
+        $cmd .= " trrental.fines,";
+        $cmd .= " trrental.finesDetail,";
         $cmd .= " mscar.brand,";
         $cmd .= " mscar.model,";
         $cmd .= " mscar.plate,";
@@ -24,77 +28,14 @@ class RentalService
         $cmd .= " LEFT JOIN mscar ON mscar.carId = trrental.carId";
         $cmd .= " LEFT JOIN mscustomer ON mscustomer.customerId = trrental.customerId";
         $cmd .= " LEFT JOIN trpicture ON trpicture.pictureId = mscar.pictureId";
-        $cmd .= " WHERE trrental.active = 'Y' AND trrental.status = 'rent'";
+        $cmd .= " WHERE trrental.active = 'Y' AND trrental.status IN ('back', 'complete') ORDER BY trrental.status IN('complete'), trrental.updateDate DESC";
         $sql = $db->prepare($cmd);
         $sql->execute();
         $result = $sql->fetchAll();
         return $result;
     }
 
-    public function getCar()
-    {
-        global $db, $api, $date;
-        $cmd = " select *, mscar.price as carprice, mscar.carId from mscar";
-        $cmd .= " LEFT JOIN trrental ON trrental.carId = mscar.carId AND trrental.active = 'Y' AND trrental.status = 'rent'";
-        $cmd .= " where trrental.carId is null";
-        $sql = $db->prepare($cmd);
-        $sql->execute();
-        $result = $sql->fetchAll();
-        return $result;
-    }
-
-    public function getCustomer()
-    {
-        global $db, $api, $date;
-        $cmd = " select *, mscustomer.customerId from mscustomer";
-        $cmd .= " LEFT JOIN trrental ON trrental.customerId = mscustomer.customerId AND trrental.active = 'Y' AND trrental.status = 'rent'";
-        $cmd .= " where trrental.customerId is null AND mscustomer.active = 'Y'";
-        $sql = $db->prepare($cmd);
-        $sql->execute();
-        $result = $sql->fetchAll();
-        return $result;
-    }
-
-    public function insertRental($carId, $customerId, $startDate, $endDate, $info, $price)
-    {
-        global $db, $api, $date, $empId;
-
-        if (!$_POST['carId'] || !$_POST['customerId']) {
-            $api->popup("Error", "กรุณากรอกข้อมูลให้ครบทุกช่อง", "error");
-            return;
-        }
-
-        if ($_POST['startDate'] >= $_POST['endDate']) {
-            $api->popup("Error", "กรุณาเลือกวันที่ให้ถูกต้อง", "error");
-            return;
-        }
-
-        $active = 'Y';
-        $status = 'rent';
-        $sql = $db->prepare("INSERT INTO trrental(customerId, carId, startDate, endDate, description, price, status, active, createBy, createDate, updateBy, updateDate) VALUES(:customerId, :carId, :startDate, :endDate, :info, :price, :status, :active, :createBy, :createDate, :updateBy, :updateDate)");
-        $sql->bindParam(":customerId", $customerId);
-        $sql->bindParam(":carId", $carId);
-        $sql->bindParam(":startDate", $startDate);
-        $sql->bindParam(":endDate", $endDate);
-        $sql->bindParam(":info", $info);
-        $sql->bindParam(":price", $price);
-        $sql->bindParam(":status", $status);
-        $sql->bindParam(":active", $active);
-        $sql->bindParam(":createBy", $empId);
-        $sql->bindParam(":createDate", $date);
-        $sql->bindParam(":updateBy", $empId);
-        $sql->bindParam(":updateDate", $date);
-        $sql->execute();
-        if (!$sql) {
-            $api->log($api->jsonParse($sql));
-            return false;
-        } else {
-            $api->log($api->jsonParse($sql));
-            return true;
-        }
-    }
-
-    public function updateRental($delete = false, $rentalId = null, $startDate = null, $endDate = null, $description = '', $price = null, $status = 'rent')
+    public function updateRental($delete = false, $rentalId = null, $startDate = null, $endDate = null, $description = '', $price = null, $status = 'rent', $finesDetail = null, $fines = null)
     {
         global $db, $api, $date, $empId;
 
@@ -118,8 +59,11 @@ class RentalService
             if ($price) {
                 $cmd .= " price = :price,";
             }
-            if ($status == 'back') {
-                $cmd .= " backDate = :dateBack,";
+            if ($finesDetail) {
+                $cmd .= " finesDetail = :finesDetail,";
+            }
+            if ($fines) {
+                $cmd .= " fines = :fines,";
             }
         }
         $cmd .= "status = :status, active = :active, updateBy = :updateBy, updateDate = :updateDate WHERE rentId = :rentalId";
@@ -133,15 +77,18 @@ class RentalService
             if ($endDate) {
                 $sql->bindParam(":endDate", $endDate);
             }
+            if ($finesDetail) {
+                $sql->bindParam(":finesDetail", $finesDetail);
+            }
+            if ($fines) {
+                $sql->bindParam(":fines", $fines);
+            }
             if ($description) {
                 $sql->bindParam(":info", $description);
             }
             if ($price) {
                 $sql->bindParam(":price", $price);
             }
-        }
-        if ($status == 'back') {
-            $sql->bindParam(":dateBack", $date);
         }
         $sql->bindParam(":status", $status);
         $sql->bindParam(":active", $active);
@@ -161,17 +108,8 @@ class RentalService
 ?>
 
 <script>
-    function addRentals() {
-        var x = document.getElementById("addRental");
-        if (x.style.display == "block") {
-            x.style.display = "none";
-        } else if (x.style.display = "none") {
-            x.style.display = "block";
-        }
-    }
-
-    function updateRentalModal(id) {
-        var x = document.getElementById("updateRental" + id);
+    function checkCarModal(id) {
+        var x = document.getElementById("checkCar" + id);
         if (x.style.display == "block") {
             x.style.display = "none";
         } else if (x.style.display = "none") {
@@ -228,27 +166,27 @@ class RentalService
         })
     }
 
-    function openBack(rentalId) {
+    function openConfirm(rentalId, finesDetail, fines) {
         Swal.fire({
             title: 'คำเตือน !',
-            text: "คุณรับคืนรถคันนี้แล้วใช่หรือไม่ ?",
+            text: "คุณได้ทำการตรวจสอบรถคันนี้แล้ว ?",
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#3085d6',
             cancelButtonColor: '#d33',
-            confirmButtonText: 'ใช่',
-            cancelButtonText: 'ไม่ใช่'
+            confirmButtonText: 'ตกลง',
+            cancelButtonText: 'ยกเลิก'
         }).then((result) => {
             if (result.isConfirmed) {
                 var xmlHttp = new XMLHttpRequest();
-                xmlHttp.open("GET", "?pages=rental&back=" + rentalId + "", false); // false for synchronous request
+                xmlHttp.open("GET", "?pages=getback&id=" + rentalId + "&finesDetail=" + finesDetail + "&fines=" + fines, false); // false for synchronous request
                 xmlHttp.send(null);
                 console.log(xmlHttp);
                 if (xmlHttp.status == 200) {
                     if (xmlHttp.responseText.includes("Success") != false) {
                         swal.fire(
                             'Success',
-                            'รับคืนรถสำเร็จ',
+                            'บันทึกสำเร็จ',
                             'success'
                         ).then(result => {
                             if (result) {

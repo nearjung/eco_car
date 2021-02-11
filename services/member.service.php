@@ -17,18 +17,22 @@ class MemberService
 
     public function register($title, $firstname, $lastname, $idcard, $telephone)
     {
-        global $db, $api, $date, $site_url;
+        global $db, $api, $date, $site_url, $empId;
         if (!$title || !$firstname || !$lastname) {
             $api->popup("Error", "กรุณากรอกชื่อให้ถูกต้อง", "error");
         } else {
             $active = 'Y';
-            $sql = $db->prepare("INSERT INTO mscustomer(title, firstname, lastname, telephone, idcard, active) VALUES(:title, :firstname, :lastname, :telephone, :idcard, :active)");
+            $sql = $db->prepare("INSERT INTO mscustomer(title, firstname, lastname, telephone, idcard, active, createBy, createDate, updateBy, updateDate) VALUES(:title, :firstname, :lastname, :telephone, :idcard, :active, :createBy, :createDate, :updateBy, :updateDate)");
             $sql->bindParam(":title", $title);
             $sql->bindParam(":firstname", $firstname);
             $sql->bindParam(":lastname", $lastname);
             $sql->bindParam(":telephone", $telephone);
             $sql->bindParam(":idcard", $idcard);
             $sql->bindParam(":active", $active);
+            $sql->bindParam(":createBy", $empId);
+            $sql->bindParam(":createDate", $date);
+            $sql->bindParam(":updateBy", $empId);
+            $sql->bindParam(":updateDate", $date);
             $sql->execute();
             if (!$sql) {
                 $api->popup("Error", "เกิดข้อผิดพลาดขณะส่งข้อมูล", "error");
@@ -49,7 +53,7 @@ class MemberService
 
         if (!$delete) {
             $active = 'Y';
-            $sql = $db->prepare("UPDATE mscustomer SET title = :title, firstname = :firstname, lastname = :lastname, telephone = :telephone, idcard = :idcard, active = :active WHERE customerId = :customerId");
+            $sql = $db->prepare("UPDATE mscustomer SET title = :title, firstname = :firstname, lastname = :lastname, telephone = :telephone, idcard = :idcard, active = :active, updateBy = :updateBy, updateDate = :updateDate WHERE customerId = :customerId");
             $sql->bindParam(":title", $title);
             $sql->bindParam(":firstname", $firstname);
             $sql->bindParam(":lastname", $lastname);
@@ -57,10 +61,12 @@ class MemberService
             $sql->bindParam(":idcard", $idcard);
         } else {
             $active = 'N';
-            $sql = $db->prepare("UPDATE mscustomer SET active = :active WHERE customerId = :customerId");
+            $sql = $db->prepare("UPDATE mscustomer SET active = :active, updateBy = :updateBy, updateDate = :updateDate WHERE customerId = :customerId");
         }
         $sql->bindParam(":active", $active);
         $sql->bindParam(":customerId", $customerId);
+        $sql->bindParam(":updateBy", $empId);
+        $sql->bindParam(":updateDate", $date);
         $sql->execute();
         if (!$sql) {
             $api->popup("Error", "เกิดข้อผิดพลาดขณะส่งข้อมูล", "error");

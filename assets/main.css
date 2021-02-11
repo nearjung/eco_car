@@ -274,3 +274,8 @@ body::-webkit-scrollbar-corner {
   .dropdownStyle:hover .dropbtn {
     background-color: #3e8e41;
   }
+
+  .striked-out {
+    color: red;
+    background: linear-gradient(to left top, transparent 49%, currentColor 0, currentColor 51%, transparent 0);
+  }
