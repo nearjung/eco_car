@@ -135,6 +135,7 @@ $getCar = $carService->get();
                     if(!$sql) {
                         $api->popup("Error", "เกิดข้อผิดพลาดขณะรันข้อมูล", "error");
                     } else {
+                        
                         $api->popup("Success", "เพิ่มรถยนต์สำเร็จ", "?pages=carinfo");
                     }
                 } else {
